@@ -3,19 +3,19 @@ package models;
 public
 class Model1 {
     @Bind
-    private int LL; // number of years
-    @Bind private double [] twKI; // the growth rate of private consumption
-    @Bind private double [] twKS; // the growth rate of public consumption
-    @Bind private double [] twINW; // investment growth
-    @Bind private double [] twEKS; // export growth
-    @Bind private double [] twIMP; // import growth
-    @Bind private double [] KI; // private consumption
-    @Bind private double [] KS; // public consumption
-    @Bind private double [] INW; // investments
-    @Bind private double [] EKS; // export
-    @Bind private double [] IMP; // import
-    @Bind private double [] PKB; // GDP
-    private double temp; // this field is not associated with the data model or with the results
+    private int LL;
+    @Bind private double [] twKI;
+    @Bind private double [] twKS;
+    @Bind private double [] twINW;
+    @Bind private double [] twEKS;
+    @Bind private double [] twIMP;
+    @Bind private double [] KI;
+    @Bind private double [] KS;
+    @Bind private double [] INW;
+    @Bind private double [] EKS;
+    @Bind private double [] IMP;
+    @Bind private double [] PKB;
+    private double temp;
     public Model1() {}
     public void run() {
         PKB = new double [LL];

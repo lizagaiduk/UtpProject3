@@ -19,8 +19,8 @@ public class Controller {
 
     public Controller(String modelName) {
         this.modelName = modelName;
-        this.data = new HashMap<>();
-        this.results = new HashMap<>();
+        this.data = new LinkedHashMap<>();
+        this.results = new LinkedHashMap<>();
         try {
             System.out.println("Attempting to load model: " + modelName);
             Class<?> c= Class.forName(modelName);
@@ -92,7 +92,7 @@ public class Controller {
         ScriptEngine engine = manager.getEngineByName("groovy");
 
         if (engine == null) {
-            throw new RuntimeException("Groovy ScriptEngine not found. Ensure Groovy library is on the classpath.");
+            throw new RuntimeException("Groovy scriptEngine not found. Ensure groovy library is on the classpath.");
         }
 
         results.forEach((key, value) -> {
@@ -189,8 +189,6 @@ public class Controller {
         engine.getBindings(ScriptContext.ENGINE_SCOPE).forEach((key, value) -> {
             if (value instanceof double[]) {
                 results.put(key, (double[]) value);
-            } else if (value instanceof Number) {
-                results.put(key, new double[]{((Number) value).doubleValue()});
             }
         });
     }

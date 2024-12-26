@@ -42,9 +42,9 @@ public class ModellingFrameworkGUI extends JFrame {
         runModelButton = new JButton("Run Model");
         leftPanel.add(runModelButton, BorderLayout.SOUTH);
 
-        leftPanel.setPreferredSize(new Dimension(250, 600)); // Narrow panel for models and data
+        leftPanel.setPreferredSize(new Dimension(250, 600));
 
-        // Right Panel: Results and Scripts
+
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(BorderFactory.createTitledBorder("Results"));
 
@@ -60,9 +60,9 @@ public class ModellingFrameworkGUI extends JFrame {
 
         rightPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        rightPanel.setPreferredSize(new Dimension(650, 600)); // Wider panel for results
+        rightPanel.setPreferredSize(new Dimension(650, 600));
 
-        // Add Panels to Frame
+
         add(leftPanel, BorderLayout.WEST);
         add(rightPanel, BorderLayout.CENTER);
 
