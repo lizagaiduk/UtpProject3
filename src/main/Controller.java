@@ -12,13 +12,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Controller {
-    private final String modelName;
     private final Object model;
     private final Map<String, double[]> data;
     private final Map<String, double[]> results;
 
     public Controller(String modelName) {
-        this.modelName = modelName;
         this.data = new LinkedHashMap<>();
         this.results = new LinkedHashMap<>();
         try {
@@ -62,7 +60,7 @@ public class Controller {
         return this;
     }
 
-    public Controller runModel() {
+    public void runModel() {
         try {
             System.out.println("Running model...");
             model.getClass().getMethod("run").invoke(model);
@@ -71,10 +69,9 @@ public class Controller {
         } catch (Exception e) {
             throw new RuntimeException("Error executing model", e);
         }
-        return this;
     }
 
-    public Controller runScriptFromFile(String fname) {
+    public void runScriptFromFile(String fname) {
         try (Scanner scanner = new Scanner(new File(fname))) {
             StringBuilder script = new StringBuilder();
             while (scanner.hasNextLine()) {
@@ -84,10 +81,9 @@ public class Controller {
         } catch (FileNotFoundException e) {
             throw new RuntimeException("Script file not found: " + fname, e);
         }
-        return this;
     }
 
-    public Controller runScript(String script) {
+    public void runScript(String script) {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine engine = manager.getEngineByName("groovy");
 
@@ -100,7 +96,7 @@ public class Controller {
             engine.put(key, value);
         });
 
-        int LL = (int) getField("LL");
+        int LL = (int) getField();
         engine.put("LL", LL);
         System.out.println("Adding to script engine: LL = " + LL);
 
@@ -112,26 +108,41 @@ public class Controller {
         } catch (Exception e) {
             throw new RuntimeException("Error executing script: " + script, e);
         }
-        return this;
     }
+   public String getResultsAsTsv() {
+       StringBuilder tsv = new StringBuilder("LATA");
+       int LL = (int) getField();
+       for (int i = 0; i < LL; i++) {
+           tsv.append("\t").append(2015 + i);
+       }
+       tsv.append("\n");
+       results.forEach((key, value) -> {
+           tsv.append(key).append("\t");
+           tsv.append(Arrays.stream(value)
+                   .mapToObj(v -> roundValue(v))
+                   .collect(Collectors.joining("\t")));
+           tsv.append("\n");
+       });
+       return tsv.toString();
+   }
 
 
-    public String getResultsAsTsv() {
-        StringBuilder tsv = new StringBuilder("LATA");
-        int LL = (int) getField("LL");
-        for (int i = 0; i < LL; i++) {
-            tsv.append("\t").append(2015 + i);
+    private String roundValue(double value) {
+       if (value == (int) value) {
+            return String.valueOf((int) value);
+       }
+      if (value < 1) {
+            return String.format("%.3f", value);
+        } else if(value>1&&value<10){
+            return String.format("%.2f", value);
+        } else {
+            return String.format("%.1f", value);
         }
-        tsv.append("\n");
-
-        results.forEach((key, value) -> {
-            tsv.append(key).append("\t").append(Arrays.stream(value).mapToObj(Double::toString).collect(Collectors.joining("\t"))).append("\n");
-        });
-        return tsv.toString();
     }
+
 
     private double[] parseValues(String[] parts) {
-        int LL = (int) getField("LL");
+        int LL = (int) getField();
         double[] values = new double[LL];
         for (int i = 1; i < parts.length && i <= LL; i++) {
             values[i - 1] = Double.parseDouble(parts[i]);
@@ -156,16 +167,16 @@ public class Controller {
         }
     }
 
-    private Object getField(String fieldName) {
+    private Object getField() {
         try {
             Field field = Arrays.stream(model.getClass().getDeclaredFields())
-                    .filter(f -> f.isAnnotationPresent(Bind.class) && f.getName().equals(fieldName))
+                    .filter(f -> f.isAnnotationPresent(Bind.class) && f.getName().equals("LL"))
                     .findFirst()
-                    .orElseThrow(() -> new NoSuchFieldException("Field not found: " + fieldName));
+                    .orElseThrow(() -> new NoSuchFieldException("Field not found: " + "LL"));
             field.setAccessible(true);
             return field.get(model);
         } catch (Exception e) {
-            throw new RuntimeException("Error getting field: " + fieldName, e);
+            throw new RuntimeException("Error getting field: " + "LL", e);
         }
     }
 

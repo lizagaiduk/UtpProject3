@@ -4,19 +4,17 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
 import java.util.Arrays;
-import java.util.Objects;
 
-public class ModellingFrameworkGUI extends JFrame {
+public class Framework extends JFrame {
     private final JList<String> modelList;
     private final JList<String> dataList;
-    private final JTable resultTable;
     private final DefaultTableModel tableModel;
     private final JButton runModelButton;
     private final JButton runScriptFromFileButton;
     private final JButton createAdHocScriptButton;
     private Controller controller;
 
-    public ModellingFrameworkGUI() {
+    public Framework() {
         setTitle("Modelling Framework");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(600, 400);
@@ -49,7 +47,7 @@ public class ModellingFrameworkGUI extends JFrame {
         rightPanel.setBorder(BorderFactory.createTitledBorder("Results"));
 
         tableModel = new DefaultTableModel();
-        resultTable = new JTable(tableModel);
+        JTable resultTable = new JTable(tableModel);
         rightPanel.add(new JScrollPane(resultTable), BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -93,7 +91,6 @@ public class ModellingFrameworkGUI extends JFrame {
                 JOptionPane.showMessageDialog(this, "Please run a model first.");
                 return;
             }
-
             JFileChooser fileChooser = new JFileChooser();
             int choice = fileChooser.showOpenDialog(this);
             if (choice == JFileChooser.APPROVE_OPTION) {
@@ -106,13 +103,11 @@ public class ModellingFrameworkGUI extends JFrame {
                 }
             }
         });
-
         createAdHocScriptButton.addActionListener(e -> {
             if (controller == null) {
                 JOptionPane.showMessageDialog(this, "Please run a model first.");
                 return;
             }
-
             JDialog dialog = new JDialog(this, "Script", true);
             dialog.setLayout(new BorderLayout());
             dialog.setSize(400, 300);
@@ -125,7 +120,7 @@ public class ModellingFrameworkGUI extends JFrame {
             dialog.add(scrollPane, BorderLayout.CENTER);
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            JButton okButton = new JButton("Ok");
+            JButton okButton = new JButton("OK");
             JButton cancelButton = new JButton("Cancel");
             buttonPanel.add(okButton);
             buttonPanel.add(cancelButton);
@@ -163,12 +158,13 @@ public class ModellingFrameworkGUI extends JFrame {
     private void loadModels(DefaultListModel<String> modelListModel) {
         File modelsDir = new File("out/production/UTPproject3/models");
         if (modelsDir.exists() && modelsDir.isDirectory()) {
-            String[] models = modelsDir.list((dir, name) -> name.endsWith(".class"));
+            String[] models = modelsDir.list((dir, name) -> name.endsWith(".class")&&name.startsWith("Model"));
             if (models != null) {
                 Arrays.stream(models)
-                        .filter(Objects::nonNull)
+                        .filter(name -> name != null)
                         .map(name -> name.replace(".class", ""))
-                        .forEach(modelListModel::addElement);
+                        .forEach(model -> modelListModel.addElement(model));
+
             }
         }
     }
@@ -179,15 +175,16 @@ public class ModellingFrameworkGUI extends JFrame {
             String[] dataFiles = dataDir.list((dir, name) -> name.endsWith(".txt"));
             if (dataFiles != null) {
                 Arrays.stream(dataFiles)
-                        .filter(Objects::nonNull)
-                        .forEach(dataListModel::addElement);
+                        .filter(name -> name != null)
+                        .forEach(name -> dataListModel.addElement(name));
+
             }
         }
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            ModellingFrameworkGUI gui = new ModellingFrameworkGUI();
+            Framework gui = new Framework();
             gui.setVisible(true);
         });
     }
