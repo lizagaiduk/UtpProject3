@@ -1,11 +1,12 @@
 package main;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
 import java.util.Arrays;
 
-public class Framework extends JFrame {
+public class Application extends JFrame {
     private final JList<String> modelList;
     private final JList<String> dataList;
     private final DefaultTableModel tableModel;
@@ -14,14 +15,14 @@ public class Framework extends JFrame {
     private final JButton createAdHocScriptButton;
     private Controller controller;
 
-    public Framework() {
-        setTitle("Modelling Framework");
+    public Application() {
+        setTitle("Modelling framework");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(600, 400);
+        setSize(800, 600);
         setLayout(new BorderLayout());
 
         JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.setBorder(BorderFactory.createTitledBorder("Select Model and Data"));
+        leftPanel.setBorder(BorderFactory.createTitledBorder("Select model and data"));
 
         DefaultListModel<String> modelListModel = new DefaultListModel<>();
         modelList = new JList<>(modelListModel);
@@ -37,11 +38,9 @@ public class Framework extends JFrame {
 
         leftPanel.add(selectionPanel, BorderLayout.CENTER);
 
-        runModelButton = new JButton("Run Model");
+        runModelButton = new JButton("Run model");
         leftPanel.add(runModelButton, BorderLayout.SOUTH);
-
-        leftPanel.setPreferredSize(new Dimension(250, 600));
-
+        leftPanel.setPreferredSize(new Dimension(300, 600));
 
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(BorderFactory.createTitledBorder("Results"));
@@ -51,20 +50,19 @@ public class Framework extends JFrame {
         rightPanel.add(new JScrollPane(resultTable), BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        runScriptFromFileButton = new JButton("Run Script from File");
-        createAdHocScriptButton = new JButton("Create and Run Script");
+        runScriptFromFileButton = new JButton("Run script from file");
+        createAdHocScriptButton = new JButton("Create and run script");
         buttonPanel.add(runScriptFromFileButton);
         buttonPanel.add(createAdHocScriptButton);
 
         rightPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        rightPanel.setPreferredSize(new Dimension(650, 600));
-
+        rightPanel.setPreferredSize(new Dimension(500, 600));
 
         add(leftPanel, BorderLayout.WEST);
         add(rightPanel, BorderLayout.CENTER);
 
         setupActions();
+        setVisible(true);
     }
 
     private void setupActions() {
@@ -92,6 +90,7 @@ public class Framework extends JFrame {
                 return;
             }
             JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setCurrentDirectory(new File("src/scripts"));
             int choice = fileChooser.showOpenDialog(this);
             if (choice == JFileChooser.APPROVE_OPTION) {
                 File scriptFile = fileChooser.getSelectedFile();
@@ -103,44 +102,39 @@ public class Framework extends JFrame {
                 }
             }
         });
+
         createAdHocScriptButton.addActionListener(e -> {
             if (controller == null) {
                 JOptionPane.showMessageDialog(this, "Please run a model first.");
                 return;
             }
-            JDialog dialog = new JDialog(this, "Script", true);
-            dialog.setLayout(new BorderLayout());
-            dialog.setSize(400, 300);
-            dialog.setLocationRelativeTo(this);
 
-            JTextArea scriptArea = new JTextArea();
-            scriptArea.setLineWrap(true);
-            scriptArea.setWrapStyleWord(true);
+            JTextArea scriptArea = new JTextArea(10, 40);
             JScrollPane scrollPane = new JScrollPane(scriptArea);
-            dialog.add(scrollPane, BorderLayout.CENTER);
 
-            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            JButton okButton = new JButton("OK");
-            JButton cancelButton = new JButton("Cancel");
-            buttonPanel.add(okButton);
-            buttonPanel.add(cancelButton);
+            int result = JOptionPane.showConfirmDialog(
+                    this,
+                    scrollPane,
+                    "Write and run script",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
 
-            dialog.add(buttonPanel, BorderLayout.SOUTH);
-
-            okButton.addActionListener(ev -> {
+            if (result == JOptionPane.OK_OPTION) {
                 String script = scriptArea.getText();
+
+                if (script.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Script cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
                 try {
                     controller.runScript(script);
                     updateResultsTable();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
-                dialog.dispose();
-            });
-
-            cancelButton.addActionListener(ev -> dialog.dispose());
-
-            dialog.setVisible(true);
+            }
         });
     }
 
@@ -156,15 +150,14 @@ public class Framework extends JFrame {
     }
 
     private void loadModels(DefaultListModel<String> modelListModel) {
-        File modelsDir = new File("out/production/UTPproject3/models");
+        File modelsDir = new File("src/models");
         if (modelsDir.exists() && modelsDir.isDirectory()) {
-            String[] models = modelsDir.list((dir, name) -> name.endsWith(".class")&&name.startsWith("Model"));
+            String[] models = modelsDir.list((dir, name) -> name.endsWith(".java") && name.startsWith("Model"));
             if (models != null) {
                 Arrays.stream(models)
                         .filter(name -> name != null)
-                        .map(name -> name.replace(".class", ""))
-                        .forEach(model -> modelListModel.addElement(model));
-
+                        .map(name -> name.replace(".java", ""))
+                        .forEach(modelListModel::addElement);
             }
         }
     }
@@ -176,16 +169,13 @@ public class Framework extends JFrame {
             if (dataFiles != null) {
                 Arrays.stream(dataFiles)
                         .filter(name -> name != null)
-                        .forEach(name -> dataListModel.addElement(name));
-
+                        .forEach(dataListModel::addElement);
             }
         }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Framework gui = new Framework();
-            gui.setVisible(true);
-        });
+
+        SwingUtilities.invokeLater(Application::new);
     }
 }
