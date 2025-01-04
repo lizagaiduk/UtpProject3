@@ -1,5 +1,7 @@
 package models;
 
+import main.Bind;
+
 public
 class Model1 {
     @Bind

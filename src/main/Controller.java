@@ -1,40 +1,39 @@
 package main;
-import models.Bind;
 
+
+
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptContext;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Controller {
     private final Object model;
-    private final Map<String, double[]> data;
     private final Map<String, double[]> results;
-    private List<Integer> years;
+    private final List<Integer> years;
 
     public Controller(String modelName) {
-        this.data = new LinkedHashMap<>();
         this.results = new LinkedHashMap<>();
         this.years = new ArrayList<>();
         try {
-            System.out.println("Attempting to load model: " + modelName);
             Class<?> c= Class.forName(modelName);
             this.model = c.getDeclaredConstructor().newInstance();
-            System.out.println("Model loaded successfully: " + modelName);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Class not found: " + modelName, e);
         }
     }
 
-    public Controller readDataFrom(String fname) {
-        try (Scanner scanner = new Scanner(new File(fname))) {
+    public Controller readDataFrom(String fileName) {
+        try (Scanner scanner = new Scanner(new File(fileName))) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim();
                 if (line.startsWith("LATA")) {
@@ -47,15 +46,12 @@ public class Controller {
                     String[] parts = line.split("\\s+");
                     String varName = parts[0];
                     double[] values = parseValue(parts);
-                    data.put(varName, values);
                     setField(varName, values);
                 }
             }
 
         } catch (FileNotFoundException e) {
-            throw new RuntimeException("File not found: " + fname, e);
-        } catch (Exception e) {
-            throw new RuntimeException("Error reading data from file: " + fname, e);
+            throw new RuntimeException("File not found: " + fileName, e);
         }
         return this;
     }
@@ -75,9 +71,7 @@ public class Controller {
 
     public void runModel() {
         try {
-            System.out.println("Running model...");
             model.getClass().getMethod("run").invoke(model);
-            System.out.println("Model executed successfully.");
             updateResults();
         } catch (Exception e) {
             throw new RuntimeException("Error executing model", e);
@@ -119,35 +113,35 @@ public class Controller {
         }
 
         results.forEach((key, value) -> {
-            System.out.println("Adding to script engine: " + key + " = " + Arrays.toString(value));
             engine.put(key, value);
         });
 
         int LL = (int) getField();
         engine.put("LL", LL);
-        System.out.println("Adding to script engine: LL = " + LL);
 
         try {
-            System.out.println("Executing script: " + script);
             engine.eval(script);
             updateResultsFromScript(engine);
-            System.out.println("Script executed successfully.");
         } catch (Exception e) {
             throw new RuntimeException("Error executing script: " + script, e);
         }
     }
 
     private String roundValue(double value) {
-        if (value == (int) value) {
-            return String.valueOf((int) value);
-        }
-        if (value < 1) {
-            return String.format("%.3f", value);
-        } else if(value>1&&value<10){
-            return String.format("%.2f", value);
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols();
+        symbols.setGroupingSeparator(' ');
+        symbols.setDecimalSeparator(',');
+
+        DecimalFormat formatter;
+
+        if (value >= 10) {
+            formatter = new DecimalFormat("#,##0.#", symbols);
+        } else if (value >= 1) {
+            formatter = new DecimalFormat("#,##0.##", symbols);
         } else {
-            return String.format("%.1f", value);
+            formatter = new DecimalFormat("#,##0.###", symbols);
         }
+       return  formatter.format(value);
     }
 
     private void setField(String fieldName, Object value) {
@@ -197,7 +191,7 @@ public class Controller {
         results.forEach((key, value) -> {
             tsv.append(key).append("\t");
             tsv.append(Arrays.stream(value)
-                    .mapToObj(this::roundValue)
+                    .mapToObj( val-> roundValue(val))
                     .collect(Collectors.joining("\t")));
             tsv.append("\n");
         });

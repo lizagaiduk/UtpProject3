@@ -45,7 +45,13 @@ public class Application extends JFrame {
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(BorderFactory.createTitledBorder("Results"));
 
-        tableModel = new DefaultTableModel();
+        tableModel = new DefaultTableModel(){
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
         JTable resultTable = new JTable(tableModel);
         rightPanel.add(new JScrollPane(resultTable), BorderLayout.CENTER);
 
@@ -152,7 +158,7 @@ public class Application extends JFrame {
     private void loadModels(DefaultListModel<String> modelListModel) {
         File modelsDir = new File("src/models");
         if (modelsDir.exists() && modelsDir.isDirectory()) {
-            String[] models = modelsDir.list((dir, name) -> name.endsWith(".java") && name.startsWith("Model"));
+            String[] models = modelsDir.list((dir, name) -> name.endsWith(".java"));
             if (models != null) {
                 Arrays.stream(models)
                         .filter(name -> name != null)
@@ -169,13 +175,12 @@ public class Application extends JFrame {
             if (dataFiles != null) {
                 Arrays.stream(dataFiles)
                         .filter(name -> name != null)
-                        .forEach(dataListModel::addElement);
+                        .forEach(name->dataListModel.addElement(name));
             }
         }
     }
 
     public static void main(String[] args) {
-
         SwingUtilities.invokeLater(Application::new);
     }
 }
